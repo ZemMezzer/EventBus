@@ -1,0 +1,6 @@
+﻿.idea/.idea.EventBus/.idea
+EventBus/bin
+EventBus/obj
+packages
+tests/obj
+tests/bin
