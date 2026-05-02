@@ -33,18 +33,18 @@ namespace TiredSiren.EventBus.EventChannels
         {
             if (!_observersContainer.TryGetValue(typeof(TEvent), out var observers))
                 return;
+            
+            var snapshot = observers.ToArray();
 
-            for (var i = observers.Count - 1; i >= 0; i--)
+            foreach (var observer in snapshot)
             {
-                var observer = (Observer<TEvent>)observers[i];
-
                 try
                 {
-                    observer.OnNext(ev);
+                    ((Observer<TEvent>)observer).OnNext(ev);
                 }
                 catch (Exception e)
                 {
-                    observer.OnErrorResume(e);
+                    ((Observer<TEvent>)observer).OnErrorResume(e);
                 }
             }
         }
