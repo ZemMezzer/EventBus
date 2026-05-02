@@ -80,6 +80,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Channels.cs" />
         <Compile Include="Events.cs" />
         <Compile Include="Tests.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>

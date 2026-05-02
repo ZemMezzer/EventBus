@@ -1,52 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using R3;
+using TiredSiren.EventBus.EventChannels;
 
 namespace TiredSiren.EventBus
 {
     public class EventBus : IEventBus
     {
-        private readonly Dictionary<Type, List<object>> _observersContainer = new Dictionary<Type, List<object>>();
-        
-        public Observable<T> Observe<T>() where T : IEvent
+        private readonly Dictionary<Type, EventChannel> _channelsContainer = new Dictionary<Type, EventChannel>();
+        private readonly EventChannel _defaultEventChannel = new EventChannel();
+
+        public EventChannel GetChannel<TChannel>() where TChannel : IEventChannel
         {
-            return Observable.Create<T>(observer =>
-            {
-                if (!_observersContainer.TryGetValue(typeof(T), out var observers))
-                {
-                    observers = new List<object>();
-                    _observersContainer[typeof(T)] = observers;
-                }
-                
-                observers.Add(observer);
-                
-                return Disposable.Create(() =>
-                {
-                    observers.Remove(observer);
-                    
-                    if(observers.Count <= 0)
-                        _observersContainer.Remove(typeof(T));
-                });
-            });
+            if (_channelsContainer.TryGetValue(typeof(TChannel), out var channel)) 
+                return channel;
+            
+            channel = new EventChannel();
+            _channelsContainer[typeof(TChannel)] = channel;
+
+            return channel;
         }
 
-        public void Publish<T>(T ev) where T : IEvent
+        public Observable<TEvent> Observe<TEvent>() where TEvent : IEvent
         {
-            if (!_observersContainer.TryGetValue(typeof(T), out var observers))
-                return;
+            return _defaultEventChannel.Observe<TEvent>();
+        }
 
-            for (var i = observers.Count - 1; i >= 0; i--)
+        public void Broadcast<TEvent>(TEvent ev) where TEvent : IEvent
+        {
+            _defaultEventChannel.Publish(ev);
+            
+            foreach (var channelKeyValue in _channelsContainer)
             {
-                var observer = (Observer<T>)observers[i];
-
-                try
-                {
-                    observer.OnNext(ev);
-                }
-                catch (Exception e)
-                {
-                    observer.OnErrorResume(e);
-                }
+                var channel = channelKeyValue.Value;
+                channel.Publish(ev);
             }
         }
     }
